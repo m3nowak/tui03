@@ -48,6 +48,8 @@ def _location_search(problem, scoring_values, location, ngh, nsp, keep_og_locs):
         :return dict: best location found
     """
     locations_local = search.spawn_local_seekers(problem, location, ngh, nsp)
+    if keep_og_locs:
+        locations_local.append(location)
     locations_local_rating = rating.rate_locations(
         locations_local, scoring_values)
 
@@ -58,7 +60,7 @@ def _location_search(problem, scoring_values, location, ngh, nsp, keep_og_locs):
 
 
 def initialize(problem, scoring_values, stale_rounds, n, m, ngh, nsp, e=0,
-               nep=None, keep_og_locs=False):
+               nep=0, keep_og_locs=False):
     """
     Launch bee algorithm
         :param dict problem: problem dictionary
@@ -102,11 +104,18 @@ def initialize(problem, scoring_values, stale_rounds, n, m, ngh, nsp, e=0,
             locations_global, locations_global_rating)
 
         elite_search_locations = locations_global_sorted[-e:]
-        standard_search_locations = locations_global_sorted[:-e][-(m-e)]
+        if e > 0:
+            standard_search_locations = locations_global_sorted[:-e][-(m-e):]
+        else:
+            standard_search_locations = locations_global_sorted[-m:]
 
-        elite_search_results = [_location_search(
-            problem, scoring_values, location, ngh, nep, keep_og_locs)
-            for location in elite_search_locations]
+        if e > 0:
+            elite_search_results = [_location_search(
+                problem, scoring_values, location, ngh, nep, keep_og_locs)
+                for location in elite_search_locations]
+        else:
+            elite_search_results = []
+        
         standard_search_results = [_location_search(
             problem, scoring_values, location, ngh, nsp, keep_og_locs)
             for location in standard_search_locations]
